@@ -1,0 +1,58 @@
+service: bookshelf
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
+
+custom:
+  dynamodb:
+    start:
+      migrate: true
+      port: ${self:provider.environment.DYNAMO_PORT}
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-1
+
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      - dynamodb:UpdateItem
+      - dynamodb:DeleteItem
+    Resource:
+        - { "Fn::GetAtt": ["BooksDynamoDBTable", "Arn" ] }
+
+  environment:
+    BOOKS_TABLE: bs-books
+    DYNAMO_PORT: 15002
+
+functions:
+  app:
+    handler: index.handler
+    events:
+        - http: ANY /
+        - http: 'ANY {proxy+}'
+
+resources:
+  Resources:
+    BooksDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.BOOKS_TABLE}

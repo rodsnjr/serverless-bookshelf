@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <!--Import Google Icon Font-->
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <!--Import materialize.css-->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  
+      <!--Let browser know website is optimized for mobile-->
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+
+    <body>
+        <!--JavaScript at end of body for optimized loading-->
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+        <div class="row">
+            <nav>
+                <div class="nav-wrapper teal lighten-2">
+                <a href="#" class="">Boook Shelf Application</a>
+                <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href=""></a></li>
+                </ul>
+                </div>
+            </nav>
+        </div>
+                        
+
+        <div class="container row" id="bookApp">
+            <div class="col s6">
+                <div class="input-field col s6">
+                    <input v-model="book.name" placeholder="Placeholder" id="name" type="text" class="validate">
+                    <label for="name">Book Name</label>
+                </div>
+                <a v-on:click="create" class="waves-effect waves-light btn">Create Book</a>
+            </div>
+
+            <div class="col s6">
+                <ul class="collection" v-for="book in books">
+                    <li  class="collection-item"> {{ book.name }} </li>
+                </ul>
+            </div>
+        </div>
+
+        <script>
+            const getBooks = function() {
+                return axios.get('http://localhost:3000/book')
+                     .then(response => response.data);
+            }
+            var app = new Vue({
+                    el: '#bookApp',
+                    data: {
+                        books: [],
+                        book: {
+                            name: ''
+                        }
+                    },
+                    methods: {
+                        create: function(evt) {
+                            axios.post('/book', this.book)
+                            .then(response => {
+                                console.log(response.data);
+                                getBooks().then(newBooks => this.books = newBooks);
+                            });
+                        }
+                    },
+                    mounted () {
+                        getBooks().then(newBooks => this.books = newBooks);
+                    }
+                });
+        </script>
+    </body>
+  </html>
