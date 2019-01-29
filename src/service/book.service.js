@@ -11,16 +11,30 @@ const validBook = function(book) {
 }
 
 module.exports = {
-    create: function(book){
-        console.log('Creating book');
-        return validBook(book).then(validBook => bookRepository.create(validBook));
+    response: function(item) {
+        return {
+            status: (item ? 200: 404),
+            body: item
+        };
     },
-
+    create: function(book){
+        console.log('Creating Book');
+        return validBook(book)
+            .then(validBook => bookRepository.create(validBook));
+    },
     findAll: function() {
         return bookRepository.findAll();
     },
-
     find: function(id) {
-        return bookRepository.find(id);
+        return bookRepository.find(id)
+            .then(foundBook => this.response(foundBook));
+    },
+    delete: function(id){
+        return bookRepository.delete(id);
+    },
+    update: function(book){
+        console.log('Updating Book');
+        return validBook(book)
+            .then(validBook => bookRepository.update(validBook));
     }
 }

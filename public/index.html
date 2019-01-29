@@ -34,12 +34,14 @@
                     <input v-model="book.name" placeholder="Placeholder" id="name" type="text" class="validate">
                     <label for="name">Book Name</label>
                 </div>
-                <a v-on:click="create" class="waves-effect waves-light btn">Create Book</a>
+                <a v-on:click="create" v-if="!selected" class="waves-effect waves-light btn">Create Book</a>
+                <a v-on:click="update" v-if="selected" class="waves-effect waves-light btn">Update Book</a>
+                <a v-on:click="remove" v-if="selected" class="red btn">Remove Book</a>
             </div>
 
             <div class="col s6">
                 <ul class="collection" v-for="book in books">
-                    <li  class="collection-item"> {{ book.name }} </li>
+                    <li href="#" v-on:click="select(book)" class="collection-item"> {{ book.name }} </li>
                 </ul>
             </div>
         </div>
@@ -55,15 +57,38 @@
                         books: [],
                         book: {
                             name: ''
-                        }
+                        },
+                        selected: false
                     },
                     methods: {
                         create: function(evt) {
                             axios.post('/book', this.book)
-                            .then(response => {
-                                console.log(response.data);
-                                getBooks().then(newBooks => this.books = newBooks);
+                                .then(response => {
+                                    console.log(response.data);
+                                    getBooks().then(newBooks => this.books = newBooks);
                             });
+                        },
+                        update: function(evt) {
+                            this.selected = false;
+                            axios.put('/book', this.book)
+                                .then(response => {
+                                    console.log(response.data);
+                                    getBooks().then(newBooks => this.books = newBooks);
+                                });
+                        },
+                        select: function(book) {
+                            this.selected = true;
+                            this.book = book;
+                        },
+                        remove: function() {
+                            axios.delete(`/book/${this.book.id}`)
+                                .then(() => {
+                                    this.book = {
+                                        name: ''
+                                    };
+                                    this.selected = false;
+                                    getBooks().then(newBooks => this.books = newBooks);
+                                });
                         }
                     },
                     mounted () {
