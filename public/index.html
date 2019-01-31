@@ -30,13 +30,29 @@
 
         <div class="container row" id="bookApp">
             <div class="col s6">
-                <div class="input-field col s6">
-                    <input v-model="book.name" placeholder="Placeholder" id="name" type="text" class="validate">
-                    <label for="name">Book Name</label>
+                <div class="row">
+                    <div class="input-field">
+                        <input v-model="book.name" placeholder="Placeholder" id="name" type="text" class="validate">
+                        <label for="name">Book Name</label>
+                    </div>
                 </div>
-                <a v-on:click="create" v-if="!selected" class="waves-effect waves-light btn">Create Book</a>
-                <a v-on:click="update" v-if="selected" class="waves-effect waves-light btn">Update Book</a>
-                <a v-on:click="remove" v-if="selected" class="red btn">Remove Book</a>
+
+                <div class="row">
+                    <div class="input-field" v-if="selected">
+                        <input v-model="stock.amount" 
+                            placeholder="Placeholder"
+                            id="amount" type="text" class="validate">
+                        <label for="amount">Amount in Stock</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <a v-on:click="create" v-if="!selected" class="waves-effect waves-light btn">Create Book</a>
+                    <a v-on:click="newBook" v-if="selected" class="waves-effect waves-light btn">New Book</a>
+                    <a v-on:click="update" v-if="selected" class="waves-effect waves-light btn">Update Book</a>
+                    <a v-on:click="remove" v-if="selected" class="red btn">Remove Book</a>
+                </div>
+
             </div>
 
             <div class="col s6">
@@ -58,6 +74,9 @@
                         book: {
                             name: ''
                         },
+                        stock: {
+                            amount: 0
+                        },
                         selected: false
                     },
                     methods: {
@@ -66,7 +85,14 @@
                                 .then(response => {
                                     console.log(response.data);
                                     getBooks().then(newBooks => this.books = newBooks);
+                                    this.newBook(evt);
                             });
+                        },
+                        newBook: function(evt) {
+                            this.selected = false;
+                            this.book = {
+                                name: ''
+                            }
                         },
                         update: function(evt) {
                             this.selected = false;
@@ -79,6 +105,13 @@
                         select: function(book) {
                             this.selected = true;
                             this.book = book;
+
+                            axios.get(`/stock/${book.id}`)
+                                .then(response => {
+                                    console.log('stock amount', response.data);
+                                    this.stock = response.data;
+                                    M.updateTextFields();
+                                });
                         },
                         remove: function() {
                             axios.delete(`/book/${this.book.id}`)

@@ -1,14 +1,27 @@
 service: bookshelf
 
 plugins:
-  - serverless-offline
   - serverless-dynamodb-local
+  - serverless-offline-sns
+  - serverless-offline
 
 custom:
   dynamodb:
+    stages:
+      - dev
     start:
       migrate: true
       port: ${self:provider.environment.DYNAMO_PORT}
+      inMemory: true
+      seed: true
+      noStart: true
+    seed:
+      domain:
+        sources:
+          - table: ${self:provider.environment.BOOKS_TABLE}
+            sources: [./books-seed.json]
+  serverless-offline-sns:
+    port: ${self:provider.environment.SNS_PORT}
 
 provider:
   name: aws
@@ -27,18 +40,39 @@ provider:
       - dynamodb:DeleteItem
     Resource:
         - { "Fn::GetAtt": ["BooksDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["StockDynamoDBTable", "Arn" ] }
+  - Effect: Allow
+    Action:
+      - sns:*
 
   environment:
     BOOKS_TABLE: bs-books
+    STOCK_TABLE: bs-stock
+    STOCK_ENTRY_TOPIC: bs-stock-entry
     DYNAMO_PORT: 15002
+    SNS_PORT: 4002
 
 functions:
   app:
-    handler: index.handler
+    handler: books.handler
     events:
         - http: ANY /
         - http: 'ANY {proxy+}'
-
+  stockEntry:
+    handler: stock.stockEntry
+    events:
+      - sns:
+          topicName: ${self:provider.environment.STOCK_ENTRY_TOPIC}
+  getStock:
+    handler: stock.getStock
+    events:
+      - http:
+          method: get
+          path: stock/{bookId}
+          request:
+            parameters:
+              paths:
+                id: true
 resources:
   Resources:
     BooksDynamoDBTable:
@@ -56,3 +90,19 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.BOOKS_TABLE}
+    
+    StockDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.STOCK_TABLE}

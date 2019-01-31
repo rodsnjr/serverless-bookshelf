@@ -1,4 +1,5 @@
 const bookRepository = require('../repository/book.repository');
+const sns = require('../messenger');
 
 const validBook = function(book) {
     return new Promise((resolve, reject) => {
@@ -8,6 +9,39 @@ const validBook = function(book) {
         }
         return resolve(book);
     });
+}
+
+const addStockEntry = function(book) {
+    console.log('Calling Stock Entry Service');
+    const stockEntryTopic = process.env.STOCK_ENTRY_TOPIC;
+    
+    return new Promise((resolve, reject) => {
+        sns.publish({
+            Message: JSON.stringify({
+                bookId: book.id,
+                amount: 1,
+                message: 'stock-entry'
+            }),
+            MessageStructure: "json",
+            TopicArn: `arn:aws:sns:us-east-1:123456789012:${stockEntryTopic}`
+        }, (err, data) => {
+            if (err) {
+                console.log(err);
+                return reject({
+                    error: 'Error When adding Stock Entry'
+                });
+            }
+            console.log(`Added Stock Entry for Book 
+                        [${book.id}] 
+                        to SNS Topic - ${stockEntryTopic}`);
+            console.log(data);
+            return resolve({
+                id: book.id,
+                name: book.name,
+                stock: 1
+            });
+        });
+    })
 }
 
 module.exports = {
@@ -20,7 +54,8 @@ module.exports = {
     create: function(book){
         console.log('Creating Book');
         return validBook(book)
-            .then(validBook => bookRepository.create(validBook));
+            .then(validBook => bookRepository.create(validBook))
+            .then(createdBook => addStockEntry(createdBook));
     },
     findAll: function() {
         return bookRepository.findAll();

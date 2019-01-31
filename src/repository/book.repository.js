@@ -36,6 +36,7 @@ module.exports = {
 
     findAll: function() {
         return new Promise((resolve, reject) => {
+            console.log('Finding All Books on Database', BOOKS_TABLE);
             const params = {
                 TableName: BOOKS_TABLE
             };

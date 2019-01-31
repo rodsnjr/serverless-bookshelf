@@ -15,7 +15,8 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "serverless-dynamodb-local": "^0.2.30",
-    "serverless-http": "^1.9.0"
+    "serverless-http": "^1.9.0",
+    "serverless-offline-sns": "^0.49.0"
   },
   "devDependencies": {
     "serverless-offline": "^4.2.0"
