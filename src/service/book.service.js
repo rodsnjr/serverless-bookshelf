@@ -1,7 +1,19 @@
 const bookRepository = require('../repository/book.repository');
-const sns = require('../messenger');
+const uuid4 = require('uuid/v4');
+const sns = require('../providers/messenger');
+const s3 = require('../providers/s3');
+const stockEntryTopic = process.env.STOCK_ENTRY_TOPIC;
+const s3Bucket = process.env.S3_BUCKET;
 
-const validBook = function(book) {
+/* Private Methods */
+function response(item) {
+    return {
+        status: (item ? 200: 404),
+        body: item
+    };
+}
+
+function validBook(book) {
     return new Promise((resolve, reject) => {
         console.log('Validating Book');
         if (!book.name) {
@@ -11,9 +23,8 @@ const validBook = function(book) {
     });
 }
 
-const addStockEntry = function(book) {
-    console.log('Calling Stock Entry Service');
-    const stockEntryTopic = process.env.STOCK_ENTRY_TOPIC;
+function addStockEntry(book, stockAmount=1) {
+    console.log('Calling Stock Entry Service on ', stockEntryTopic);
     
     return new Promise((resolve, reject) => {
         sns.publish({
@@ -38,31 +49,54 @@ const addStockEntry = function(book) {
             return resolve({
                 id: book.id,
                 name: book.name,
-                stock: 1
+                stock: stockAmount,
+                image: book.image
             });
         });
-    })
+    });
 }
 
+function upload(book) {
+    if (book.image) {
+        return new Promise((resolve, reject) => {
+            const key = `book/${uuid4()}`;
+            s3.putObject({
+                Bucket: s3Bucket,
+                Key: key,
+                Body: new Buffer(book.image)
+            }, (err, data) => {
+                if (err) {
+                    console.log(err);
+                    return reject({ error: 'Error Uploading Book Image' });
+                }
+                // Replace the base64 image with a key
+                book.image = key;
+                return resolve(book);
+            });
+        })
+    }
+    return book;
+}
+
+// Service
 module.exports = {
-    response: function(item) {
-        return {
-            status: (item ? 200: 404),
-            body: item
-        };
-    },
     create: function(book){
         console.log('Creating Book');
         return validBook(book)
+            .then(bookWithImage => upload(bookWithImage))
             .then(validBook => bookRepository.create(validBook))
-            .then(createdBook => addStockEntry(createdBook));
+            .then(createdBook => { 
+                if (createdBook.addStock)
+                    return addStockEntry(createdBook, createdBook.stockAmount);
+                return createdBook;
+            });
     },
     findAll: function() {
         return bookRepository.findAll();
     },
     find: function(id) {
         return bookRepository.find(id)
-            .then(foundBook => this.response(foundBook));
+            .then(foundBook => response(foundBook));
     },
     delete: function(id){
         return bookRepository.delete(id);

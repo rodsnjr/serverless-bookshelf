@@ -1,8 +1,9 @@
 service: bookshelf
 
 plugins:
-  - serverless-dynamodb-local
   - serverless-offline-sns
+  - serverless-s3-local
+  - serverless-dynamodb-local
   - serverless-offline
 
 custom:
@@ -14,7 +15,6 @@ custom:
       port: ${self:provider.environment.DYNAMO_PORT}
       inMemory: true
       seed: true
-      noStart: true
     seed:
       domain:
         sources:
@@ -22,6 +22,10 @@ custom:
             sources: [./books-seed.json]
   serverless-offline-sns:
     port: ${self:provider.environment.SNS_PORT}
+  s3:
+    host: 0.0.0.0
+    port: ${self:provider.environment.S3_PORT}
+    directory: /tmp
 
 provider:
   name: aws
@@ -49,8 +53,10 @@ provider:
     BOOKS_TABLE: bs-books
     STOCK_TABLE: bs-stock
     STOCK_ENTRY_TOPIC: bs-stock-entry
-    DYNAMO_PORT: 15002
+    DYNAMO_PORT: 4344
     SNS_PORT: 4002
+    S3_PORT: 4333
+    S3_BUCKET: local-bucket
 
 functions:
   app:
@@ -106,3 +112,8 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.STOCK_TABLE}
+
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.S3_BUCKET}

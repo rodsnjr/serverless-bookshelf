@@ -1,5 +1,5 @@
 const uuid4 = require('uuid/v4');
-const dynamoDb = require('../database');
+const dynamoDb = require('../providers/database');
 const BOOKS_TABLE = process.env.BOOKS_TABLE;
 
 module.exports = {
@@ -21,6 +21,7 @@ module.exports = {
                 Item: {
                   id: book.id,
                   name: book.name,
+                  image: book.image
                 }
             };
 

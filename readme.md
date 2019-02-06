@@ -13,8 +13,7 @@ The REST API is split into:
 * Controller
 * Repository
 * Service
-
-The `database.js` contains the DB connection, the "IS_OFFLINE" is set to true if the application is started offline.
+* Providers
 
 # Application
 

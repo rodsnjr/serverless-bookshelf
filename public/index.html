@@ -38,11 +38,35 @@
                 </div>
 
                 <div class="row">
+                    <label>
+                        <input v-if="!selected" class="with-gap" 
+                            v-model="book.addStock" 
+                            name="group1" type="checkbox"  />
+                        <span>Create with Stock</span>
+                    </label>
+                </div>
+
+                <div class="row">
                     <div class="input-field" v-if="selected">
                         <input v-model="stock.amount" 
                             placeholder="Placeholder"
                             id="amount" type="text" class="validate">
                         <label for="amount">Amount in Stock</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <img class="responsive-img" id="bookImg" src="image/blank.jpg">
+                    <div class = "file-field input-field">
+                        <div class = "btn">
+                            <span>Selecionar</span>
+                            <input @change="selectPicture" ref="picture" type = "file" />
+                        </div>
+                        
+                        <div class = "file-path-wrapper">
+                            <input class = "file-path validate" type = "text"
+                            placeholder = "Arquivo Selecionado" />
+                        </div>
                     </div>
                 </div>
 
@@ -101,6 +125,20 @@
                                     console.log(response.data);
                                     getBooks().then(newBooks => this.books = newBooks);
                                 });
+                        },
+                        selectPicture: function() {
+                            const reader = new FileReader();
+                            const file = this.$refs.picture.files[0];
+                            reader.readAsDataURL(file);
+                        
+                            reader.onload = () => {
+                                const base64Captured = reader.result;
+                                document.getElementById("bookImg").src = base64Captured;
+                                this.book.image = base64Captured;
+                            };
+                            reader.onerror = () => {
+                                return reject({ error: 'Error Reading Base64' });
+                            };
                         },
                         select: function(book) {
                             this.selected = true;

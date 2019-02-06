@@ -1,5 +1,5 @@
 const uuid4 = require('uuid/v4');
-const dynamoDb = require('../database');
+const dynamoDb = require('../providers/database');
 const STOCK_TABLE = process.env.STOCK_TABLE;
 
 module.exports = {
